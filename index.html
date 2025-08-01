@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استعلام عن نتيجة الثانوية العامة</title>
-    <!-- SheetJS library for Excel file handling -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>نتيجة الثانوية العامة 2025</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
     <style>
         * {
             margin: 0;
@@ -286,66 +286,210 @@
             <p>استعلم عن نتيجتك باستخدام رقم الجلوس أو الاسم</p>
         </div>
 
-        <div class="search-form">
-            <div class="form-group" style="margin-bottom: 20px; text-align: center;">
-                <p id="file-status" style="font-size: 16px; color: #333; margin: 10px 0; font-weight: bold;">جاري تحميل بيانات النتائج...</p>
-                <div style="width: 100%; height: 4px; background: #f0f0f0; border-radius: 2px; overflow: hidden; margin: 10px 0;">
-                    <div id="loading-bar" style="height: 100%; width: 0%; background: linear-gradient(45deg, #667eea, #764ba2); transition: width 0.3s ease;"></div>
-                </div>
-            </div>
+        <form class="search-form" id="searchForm">
             <div class="form-group">
-                <input type="text" id="search-input" placeholder="أدخل رقم الجلوس أو اسم الطالب" disabled>
+                <input type="text" id="search-input" name="search" placeholder="أدخل رقم الجلوس أو اسم الطالب">
             </div>
 
             <div class="search-buttons">
                 <button type="button" id="searchButton" class="btn btn-primary">البحث عن النتيجة</button>
                 <button type="button" class="btn btn-secondary" onclick="clearForm()">مسح البيانات</button>
             </div>
-        </div>
 
-        <div id="result-display">
-            <!-- Results will be shown here -->
+            <div id="result-display">
+                <!-- Results will be shown here -->
+            </div>
+        </form>
+
+        <div
+            style="text-align: center; margin-top: 30px; padding: 15px; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
+            <h3 style="color: #6c757d; font-size: 1rem; margin: 0;">
+                تم البرمجة بواسطة المهندس احمد عبداللاه
+            </h3>
         </div>
     </div>
 
     <script>
-        let studentData = []; // This will hold our student data
-        let excelLoaded = false;
+        // Database object to cache all student data
+        const studentDatabase = {
+            // Indexes for fast lookups
+            bySeatNumber: new Map(),
+            byName: new Map(),
+            isInitialized: false,
+            isLoading: false,
+            loadingPromise: null,
+            loadListeners: [],
 
-        // Function to load Excel file
-        async function loadExcelFile() {
-            try {
-                const response = await fetch('نتيجة الثانوية العامة 2025.xlsx');
-                if (!response.ok) throw new Error('Failed to load Excel file');
-                
-                const arrayBuffer = await response.arrayBuffer();
-                const data = new Uint8Array(arrayBuffer);
-                const workbook = XLSX.read(data, { type: 'array' });
-                
-                // Assuming first sheet contains the data
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                
-                // Convert to JSON
-                studentData = XLSX.utils.sheet_to_json(worksheet);
-                
-                // Enable search input
-                document.getElementById('search-input').disabled = false;
-                document.getElementById('file-status').textContent = `تم تحميل ${studentData.length} سجل بنجاح`;
-                document.getElementById('file-status').style.color = 'green';
-                excelLoaded = true;
-                
-                console.log('Data loaded successfully:', studentData);
-            } catch (error) {
-                console.error('Error loading Excel file:', error);
-                showError('حدث خطأ في تحميل ملف النتائج. يرجى التأكد من وجود الملف في نفس المجلد');
-                document.getElementById('file-status').textContent = 'حدث خطأ في تحميل الملف';
-                document.getElementById('file-status').style.color = 'red';
+            // Add a listener for when the database is loaded
+            onLoaded(callback) {
+                if (this.isInitialized) {
+                    callback();
+                } else {
+                    this.loadListeners.push(callback);
+                }
+            },
+
+            // Notify all listeners that loading is complete
+            notifyListeners() {
+                while (this.loadListeners.length > 0) {
+                    const callback = this.loadListeners.shift();
+                    try {
+                        callback();
+                    } catch (e) {
+                        console.error('Error in load listener:', e);
+                    }
+                }
+            },
+
+            // Initialize the database
+            async initialize() {
+                // If already initialized, return the existing promise
+                if (this.loadingPromise) {
+                    return this.loadingPromise;
+                }
+
+                this.isLoading = true;
+                this.showLoadingIndicator('جاري تحميل قاعدة البيانات...');
+
+                this.loadingPromise = (async () => {
+                    try {
+                        // Array to store all JSON files
+                        const jsonFiles = [
+                            'نتيجة الثانوية العامة 2025_part_1.json',
+                            'نتيجة الثانوية العامة 2025_part_2.json',
+                            'نتيجة الثانوية العامة 2025_part_3.json',
+                            'نتيجة الثانوية العامة 2025_part_4.json',
+                            'نتيجة الثانوية العامة 2025_part_5.json',
+                            'نتيجة الثانوية العامة 2025_part_6.json',
+                            'نتيجة الثانوية العامة 2025_part_7.json',
+                            'نتيجة الثانوية العامة 2025_part_8.json',
+                            'نتيجة الثانوية العامة 2025_part_9.json',
+                            'نتيجة الثانوية العامة 2025_part_10.json',
+                            'نتيجة الثانوية العامة 2025_part_11.json',
+                            'نتيجة الثانوية العامة 2025_part_12.json',
+                            'نتيجة الثانوية العامة 2025_part_13.json',
+                            'نتيجة الثانوية العامة 2025_part_14.json'
+                        ];
+
+                        // Load all data in parallel
+                        const promises = jsonFiles.map(file =>
+                            fetch(file)
+                                .then(response => response.json())
+                                .catch(error => {
+                                    console.error(`Error loading file ${file}:`, error);
+                                    return null;
+                                })
+                        );
+
+                        const results = await Promise.all(promises);
+
+                        // Process all loaded data
+                        results.forEach(data => {
+                            if (data && Array.isArray(data.students)) {
+                                data.students.forEach(student => {
+                                    // Add to seat number index
+                                    if (student.seatNumber) {
+                                        this.bySeatNumber.set(student.seatNumber.toString(), student);
+                                    }
+
+                                    // Add to name index (lowercase for case-insensitive search)
+                                    if (student.name) {
+                                        const lowerName = student.name.toLowerCase();
+                                        if (!this.byName.has(lowerName)) {
+                                            this.byName.set(lowerName, []);
+                                        }
+                                        this.byName.get(lowerName).push(student);
+                                    }
+                                });
+                            }
+                        });
+
+                        this.isInitialized = true;
+                        this.isLoading = false;
+                        console.log('Database initialized with', this.bySeatNumber.size, 'students');
+                        this.hideLoadingIndicator();
+                        this.notifyListeners();
+                        return true;
+                    } catch (error) {
+                        console.error('Failed to initialize database:', error);
+                        this.isLoading = false;
+                        this.hideLoadingIndicator();
+                        throw error;
+                    }
+                })();
+
+                return this.loadingPromise;
+            },
+
+            // Show loading indicator
+            showLoadingIndicator(message) {
+                this.hideLoadingIndicator(); // Remove any existing indicators
+                const loadingElement = document.createElement('div');
+                loadingElement.id = 'database-loading';
+                loadingElement.className = 'loading';
+                loadingElement.textContent = message || 'جاري التحميل...';
+                document.body.appendChild(loadingElement);
+            },
+
+            // Hide loading indicator
+            hideLoadingIndicator() {
+                const existingIndicator = document.getElementById('database-loading');
+                if (existingIndicator) {
+                    document.body.removeChild(existingIndicator);
+                }
+            },
+
+            // Search by seat number using API
+            async findBySeatNumber(seatNumber) {
+                if (!seatNumber) return null;
+
+                // Convert seat number to string and normalize
+                const seatStr = seatNumber.toString().trim();
+                if (!seatStr) return null;
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/results?seatNumber=${encodeURIComponent(seatStr)}`);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    const data = await response.json();
+                    return data.success ? data.data : null;
+                } catch (error) {
+                    console.error('Error searching by seat number:', error);
+                    showError('حدث خطأ أثناء البحث عن رقم الجلوس. يرجى المحاولة مرة أخرى.');
+                    return null;
+                }
+            },
+
+            // Search by name (partial match)
+            async findByName(name) {
+                if (!this.isInitialized) {
+                    await this.initialize();
+                }
+
+                const searchTerm = name.toLowerCase();
+                const results = [];
+
+                for (const [studentName, students] of this.byName.entries()) {
+                    if (studentName.includes(searchTerm)) {
+                        results.push(...students);
+                    }
+                }
+
+                return results;
             }
-        }
+        };
 
-        // Load the Excel file when the page loads
-        document.addEventListener('DOMContentLoaded', loadExcelFile);
+        // Initialize the database when the page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await studentDatabase.initialize();
+                console.log('Database is ready for searching');
+            } catch (error) {
+                console.error('Failed to initialize database:', error);
+                showError('حدث خطأ أثناء تحميل قاعدة البيانات. يرجى تحديث الصفحة والمحاولة مرة أخرى.');
+            }
+        });
 
         document.getElementById('searchButton').addEventListener('click', function (e) {
             e.preventDefault();
@@ -360,117 +504,96 @@
             }
         });
 
-        function searchResults() {
-            const searchValue = document.getElementById('search-input').value.trim().toLowerCase();
+        async function searchResults() {
+            const searchValue = document.getElementById('search-input').value.trim();
             const resultDisplay = document.getElementById('result-display');
-
-            if (!excelLoaded) {
-                showError('الرجاء تحميل ملف النتائج أولاً');
-                return;
-            }
 
             if (!searchValue) {
                 showError('الرجاء إدخال رقم الجلوس أو اسم الطالب');
                 return;
             }
 
-            // Show loading state
-            resultDisplay.innerHTML = '<div class="loading">جاري البحث في قاعدة البيانات...</div>';
+            // Clear previous results
+            resultDisplay.innerHTML = '';
             resultDisplay.style.display = 'block';
 
-            // Small delay to show loading state
-            setTimeout(() => {
+            // Show loading state
+            const loadingElement = document.createElement('div');
+            loadingElement.className = 'loading';
+            loadingElement.textContent = 'جاري البحث...';
+            resultDisplay.appendChild(loadingElement);
+
+            try {
+                let results = [];
+                const isSeatNumberSearch = !isNaN(searchValue) && searchValue.length === 6;
+
                 try {
-                    // Search in the loaded data
-                    const results = studentData.filter(student => {
-                        // Try to match any field that might contain the search value
-                        for (const key in student) {
-                            const value = String(student[key] || '').toLowerCase();
-                            if (value.includes(searchValue)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    });
-
-                    if (results.length > 0) {
-                        const formattedResults = results.map(student => {
-                            // Try to find the most likely fields for each piece of information
-                            const nameField = Object.keys(student).find(k => 
-                                k.toLowerCase().includes('name') || 
-                                k.toLowerCase().includes('اسم')
-                            );
-                            
-                            const seatField = Object.keys(student).find(k => 
-                                k.toLowerCase().includes('seat') || 
-                                k.toLowerCase().includes('جلوس') ||
-                                k.toLowerCase().includes('رقم')
-                            );
-                            
-                            const scoreField = Object.keys(student).find(k => 
-                                k.toLowerCase().includes('total') || 
-                                k.toLowerCase().includes('degree') ||
-                                k.toLowerCase().includes('score') ||
-                                k.toLowerCase().includes('مجموع')
-                            );
-                            
-                            const totalScore = parseFloat(student[scoreField] || 0);
-                            const percentage = scoreField ? ((totalScore / 320) * 100).toFixed(2) : '0.00';
-                            const status = totalScore >= 160 ? 'ناجح' : 'راسب';
-                            
-                            return {
-                                name: student[nameField] || 'غير متوفر',
-                                seatNumber: student[seatField] || 'غير متوفر',
-                                totalScore: totalScore,
-                                percentage: percentage,
-                                status: status
-                            };
-                        });
-
-                        displayResults(formattedResults);
+                    if (isSeatNumberSearch) {
+                        const student = await studentDatabase.findBySeatNumber(searchValue);
+                        if (student) results = [student];
                     } else {
-                        showNoResults(searchValue);
+                        results = await studentDatabase.findByName(searchValue);
                     }
-                } catch (error) {
-                    console.error('Search error:', error);
-                    showError('حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى لاحقاً');
+                } catch (dbError) {
+                    console.error('Database search error:', dbError);
+                    throw new Error('حدث خطأ أثناء البحث في قاعدة البيانات');
                 }
-            }, 300); // Small delay to show loading state
+
+                // Remove loading indicator
+                resultDisplay.removeChild(loadingElement);
+
+                if (results.length > 0) {
+                    displayResults(results);
+                } else {
+                    showNoResults(searchValue);
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                // Remove loading indicator if it still exists
+                if (loadingElement.parentNode === resultDisplay) {
+                    resultDisplay.removeChild(loadingElement);
+                }
+                showError(error.message || 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى');
+            }
         }
 
         function displayResults(students) {
             const resultDisplay = document.getElementById('result-display');
-            let html = '<div class="result-container">';
+            resultDisplay.innerHTML = ''; // Clear previous results
+
+            if (!students || students.length === 0) {
+                showNoResults();
+                return;
+            }
 
             students.forEach(student => {
-                html += `
-                    <div class="result-item">
-                        <h3>${escapeHtml(student.name)}</h3>
-                        <p>رقم الجلوس: ${escapeHtml(student.seatNumber)}</p>
-                        <p class="total-score">
-                            <span>المجموع: ${student.totalScore} / 320</span>
-                            <span class="percentage">${student.percentage}%</span>
-                        </p>`;
+                const resultElement = document.createElement('div');
+                resultElement.className = 'result-item';
 
-                // Add status
-                const statusClass = student.status === 'ناجح' ? 'status-success' : 'status-fail';
-                html += `
-                    <p>الحالة: <span class="${statusClass}">${student.status}</span></p>`;
+                // Format the student data for display
+                let resultHTML = `
+                    <h3>${escapeHtml(student.name || 'غير معروف')}</h3>
+                    <p><strong>رقم الجلوس:</strong> ${escapeHtml(student.seatNumber || 'غير متوفر')}</p>
+                `;
 
-                html += '</div>';
+                // Add additional student information if available
+                if (student.school) resultHTML += `<p><strong>المدرسة:</strong> ${escapeHtml(student.school)}</p>`;
+                if (student.totalScore) resultHTML += `<p class="total-score">
+                    <span>المجموع الكلي</span>
+                    <span>${escapeHtml(student.totalScore)}</span>
+                </p>`;
+
+                resultElement.innerHTML = resultHTML;
+                resultDisplay.appendChild(resultElement);
             });
-
-            html += '</div>';
-            resultDisplay.innerHTML = html;
         }
 
-        function showNoResults(searchTerm) {
+        function showNoResults(searchTerm = '') {
             const resultDisplay = document.getElementById('result-display');
             resultDisplay.innerHTML = `
                 <div class="no-results">
-                    <p>عذراً، لم يتم العثور على نتائج مطابقة لـ: ${escapeHtml(searchTerm)}</p>
-                    <p>يرجى التأكد من صحة البيانات المدخلة والمحاولة مرة أخرى</p>
-                    <p>إذا كنت متأكداً من صحة البيانات، فقد لا تكون النتائج متوفرة بعد</p>
+                    <p>لا توجد نتائج ${searchTerm ? `لـ "${escapeHtml(searchTerm)}"` : 'للبحث'}</p>
+                    <p>الرجاء التأكد من صحة البيانات المدخلة والمحاولة مرة أخرى</p>
                 </div>
             `;
         }
