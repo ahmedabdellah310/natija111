@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>استعلام عن نتيجة الثانوية العامة</title>
+    <!-- SheetJS library for Excel file handling -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: white;
@@ -20,7 +23,7 @@
             align-items: center;
             padding: 20px;
         }
-        
+
         .container {
             background: white;
             border-radius: 20px;
@@ -30,12 +33,12 @@
             max-width: 600px;
             margin: 20px 0;
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 30px;
         }
-        
+
         .header h1 {
             color: #333;
             font-size: 2.5em;
@@ -45,20 +48,20 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
+
         .header p {
             color: #666;
             font-size: 1.1em;
         }
-        
+
         .search-form {
             margin-bottom: 30px;
         }
-        
+
         .form-group {
             margin-bottom: 20px;
         }
-        
+
         .form-group input {
             width: 100%;
             padding: 15px;
@@ -67,20 +70,20 @@
             font-size: 16px;
             transition: all 0.3s ease;
         }
-        
+
         .form-group input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        
+
         .search-buttons {
             display: flex;
             gap: 15px;
             justify-content: center;
             flex-wrap: wrap;
         }
-        
+
         .btn {
             padding: 15px 30px;
             border: none;
@@ -93,40 +96,40 @@
             display: inline-block;
             text-align: center;
         }
-        
+
         .btn-primary {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
-        
+
         .btn-secondary {
             background: #f8f9fa;
             color: #333;
             border: 2px solid #e1e5e9;
         }
-        
+
         .btn-secondary:hover {
             background: #e9ecef;
             transform: translateY(-2px);
         }
-        
+
         #result-display {
             margin-top: 20px;
             display: none;
         }
-        
+
         .result-container {
             display: flex;
             flex-direction: column;
             gap: 20px;
             margin-top: 20px;
         }
-        
+
         .result-item {
             background: #fff;
             border-radius: 8px;
@@ -135,12 +138,12 @@
             border-right: 4px solid #3498db;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        
+
         .result-item:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }
-        
+
         .result-item h3 {
             color: #2c3e50;
             margin: 0 0 10px 0;
@@ -148,13 +151,13 @@
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
         }
-        
+
         .result-item p {
             margin: 8px 0;
             color: #555;
             line-height: 1.6;
         }
-        
+
         .total-score {
             font-size: 1.2em;
             font-weight: bold;
@@ -167,23 +170,24 @@
             padding: 10px 15px;
             border-radius: 6px;
         }
-        
+
         .percentage {
             color: #27ae60;
             font-size: 1.1em;
         }
-        
+
         .status-success {
             color: #27ae60;
             font-weight: bold;
         }
-        
+
         .status-fail {
             color: #e74c3c;
             font-weight: bold;
         }
-        
-        .no-results, .error-message {
+
+        .no-results,
+        .error-message {
             text-align: center;
             padding: 30px 20px;
             background: #f8f9fa;
@@ -191,174 +195,238 @@
             margin: 20px 0;
             border: 1px dashed #ddd;
         }
-        
-        .no-results p, .error-message p {
+
+        .no-results p,
+        .error-message p {
             margin: 10px 0;
             color: #7f8c8d;
         }
-        
+
         .error-message {
             border-color: #f39c12;
             background: #fef9e7;
         }
-        
+
         .error-message p {
             color: #e74c3c;
         }
-        
+
         .loading {
             text-align: center;
             padding: 20px;
             font-size: 18px;
             color: #2c3e50;
         }
-        
+
         .loading:after {
             content: '...';
             animation: dots 1.5s steps(5, end) infinite;
         }
-        
+
         @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
+
+            0%,
+            20% {
+                content: '.';
+            }
+
+            40% {
+                content: '..';
+            }
+
+            60%,
+            100% {
+                content: '...';
+            }
         }
-        
+
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
                 margin: 10px;
             }
-            
+
             .header h1 {
                 font-size: 2em;
             }
-            
+
             .search-buttons {
                 flex-direction: column;
             }
-            
+
             .btn {
                 width: 100%;
             }
-            
+
             .result-item {
                 padding: 15px;
             }
-            
+
             .result-item h3 {
                 font-size: 1.2em;
             }
-            
+
             .total-score {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 5px;
             }
-            
+
             .percentage {
                 margin-top: 5px;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1>نتائج الثانوية العامة</h1>
             <p>استعلم عن نتيجتك باستخدام رقم الجلوس أو الاسم</p>
         </div>
-        
-        <form class="search-form" id="searchForm">
-            <div class="form-group">
-                <input type="text" id="search-input" name="search" placeholder="أدخل رقم الجلوس أو اسم الطالب">
+
+        <div class="search-form">
+            <div class="form-group" style="margin-bottom: 20px; text-align: center;">
+                <p id="file-status" style="font-size: 16px; color: #333; margin: 10px 0; font-weight: bold;">جاري تحميل بيانات النتائج...</p>
+                <div style="width: 100%; height: 4px; background: #f0f0f0; border-radius: 2px; overflow: hidden; margin: 10px 0;">
+                    <div id="loading-bar" style="height: 100%; width: 0%; background: linear-gradient(45deg, #667eea, #764ba2); transition: width 0.3s ease;"></div>
+                </div>
             </div>
-            
+            <div class="form-group">
+                <input type="text" id="search-input" placeholder="أدخل رقم الجلوس أو اسم الطالب" disabled>
+            </div>
+
             <div class="search-buttons">
                 <button type="button" id="searchButton" class="btn btn-primary">البحث عن النتيجة</button>
                 <button type="button" class="btn btn-secondary" onclick="clearForm()">مسح البيانات</button>
             </div>
-            
-            <div id="result-display">
-                <!-- Results will be shown here -->
-            </div>
-        </form>
-        
-        <div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
-            <h3 style="color: #6c757d; font-size: 1rem; margin: 0;">
-                تم البرمجة بواسطة المهندس احمد عبداللاه
-            </h3>
+        </div>
+
+        <div id="result-display">
+            <!-- Results will be shown here -->
         </div>
     </div>
-    
+
     <script>
-        document.getElementById('searchButton').addEventListener('click', function(e) {
+        let studentData = []; // This will hold our student data
+        let excelLoaded = false;
+
+        // Function to load Excel file
+        async function loadExcelFile() {
+            try {
+                const response = await fetch('نتيجة الثانوية العامة 2025.xlsx');
+                if (!response.ok) throw new Error('Failed to load Excel file');
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Assuming first sheet contains the data
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Convert to JSON
+                studentData = XLSX.utils.sheet_to_json(worksheet);
+                
+                // Enable search input
+                document.getElementById('search-input').disabled = false;
+                document.getElementById('file-status').textContent = `تم تحميل ${studentData.length} سجل بنجاح`;
+                document.getElementById('file-status').style.color = 'green';
+                excelLoaded = true;
+                
+                console.log('Data loaded successfully:', studentData);
+            } catch (error) {
+                console.error('Error loading Excel file:', error);
+                showError('حدث خطأ في تحميل ملف النتائج. يرجى التأكد من وجود الملف في نفس المجلد');
+                document.getElementById('file-status').textContent = 'حدث خطأ في تحميل الملف';
+                document.getElementById('file-status').style.color = 'red';
+            }
+        }
+
+        // Load the Excel file when the page loads
+        document.addEventListener('DOMContentLoaded', loadExcelFile);
+
+        document.getElementById('searchButton').addEventListener('click', function (e) {
             e.preventDefault();
             searchResults();
         });
-        
+
         // Also search when pressing Enter in the search input
-        document.getElementById('search-input').addEventListener('keypress', function(e) {
+        document.getElementById('search-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 searchResults();
             }
         });
-        
-        // Load student data
-        let studentData = [];
-        
-        // Load data when the page loads
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const response = await fetch('data/students.json');
-                if (!response.ok) throw new Error('Failed to load student data');
-                
-                const data = await response.json();
-                // Get the first key in the JSON object which contains the array of students
-                const firstKey = Object.keys(data)[0];
-                studentData = data[firstKey] || [];
-                console.log(`Loaded ${studentData.length} student records`);
-            } catch (error) {
-                console.error('Error loading student data:', error);
-                showError('حدث خطأ في تحميل بيانات الطلاب. يرجى تحديث الصفحة والمحاولة مرة أخرى');
-            }
-        });
-        
+
         function searchResults() {
             const searchValue = document.getElementById('search-input').value.trim().toLowerCase();
             const resultDisplay = document.getElementById('result-display');
-            
+
+            if (!excelLoaded) {
+                showError('الرجاء تحميل ملف النتائج أولاً');
+                return;
+            }
+
             if (!searchValue) {
                 showError('الرجاء إدخال رقم الجلوس أو اسم الطالب');
                 return;
             }
-            
+
             // Show loading state
             resultDisplay.innerHTML = '<div class="loading">جاري البحث في قاعدة البيانات...</div>';
             resultDisplay.style.display = 'block';
-            
+
             // Small delay to show loading state
             setTimeout(() => {
                 try {
                     // Search in the loaded data
                     const results = studentData.filter(student => {
-                        const seatNumber = String(student.seating_no || student.seatNumber || '').toLowerCase();
-                        const name = String(student.arabic_name || student.name || '').toLowerCase();
-                        
-                        return seatNumber.includes(searchValue) || name.includes(searchValue);
+                        // Try to match any field that might contain the search value
+                        for (const key in student) {
+                            const value = String(student[key] || '').toLowerCase();
+                            if (value.includes(searchValue)) {
+                                return true;
+                            }
+                        }
+                        return false;
                     });
-                    
+
                     if (results.length > 0) {
-                        const formattedResults = results.map(student => ({
-                            name: student.arabic_name || student.name || 'غير متوفر',
-                            seatNumber: student.seating_no || student.seatNumber || 'غير متوفر',
-                            totalScore: student.total_degree || student.totalScore || 0,
-                            percentage: student.total_degree || student.totalScore ? 
-                                ((parseFloat(student.total_degree || student.totalScore) / 320) * 100).toFixed(2) : '0.00',
-                            status: (student.total_degree || student.totalScore || 0) >= 160 ? 'ناجح' : 'راسب'
-                        }));
-                        
+                        const formattedResults = results.map(student => {
+                            // Try to find the most likely fields for each piece of information
+                            const nameField = Object.keys(student).find(k => 
+                                k.toLowerCase().includes('name') || 
+                                k.toLowerCase().includes('اسم')
+                            );
+                            
+                            const seatField = Object.keys(student).find(k => 
+                                k.toLowerCase().includes('seat') || 
+                                k.toLowerCase().includes('جلوس') ||
+                                k.toLowerCase().includes('رقم')
+                            );
+                            
+                            const scoreField = Object.keys(student).find(k => 
+                                k.toLowerCase().includes('total') || 
+                                k.toLowerCase().includes('degree') ||
+                                k.toLowerCase().includes('score') ||
+                                k.toLowerCase().includes('مجموع')
+                            );
+                            
+                            const totalScore = parseFloat(student[scoreField] || 0);
+                            const percentage = scoreField ? ((totalScore / 320) * 100).toFixed(2) : '0.00';
+                            const status = totalScore >= 160 ? 'ناجح' : 'راسب';
+                            
+                            return {
+                                name: student[nameField] || 'غير متوفر',
+                                seatNumber: student[seatField] || 'غير متوفر',
+                                totalScore: totalScore,
+                                percentage: percentage,
+                                status: status
+                            };
+                        });
+
                         displayResults(formattedResults);
                     } else {
                         showNoResults(searchValue);
@@ -369,11 +437,11 @@
                 }
             }, 300); // Small delay to show loading state
         }
-        
+
         function displayResults(students) {
             const resultDisplay = document.getElementById('result-display');
             let html = '<div class="result-container">';
-            
+
             students.forEach(student => {
                 html += `
                     <div class="result-item">
@@ -383,19 +451,19 @@
                             <span>المجموع: ${student.totalScore} / 320</span>
                             <span class="percentage">${student.percentage}%</span>
                         </p>`;
-                
+
                 // Add status
                 const statusClass = student.status === 'ناجح' ? 'status-success' : 'status-fail';
                 html += `
                     <p>الحالة: <span class="${statusClass}">${student.status}</span></p>`;
-                
+
                 html += '</div>';
             });
-            
+
             html += '</div>';
             resultDisplay.innerHTML = html;
         }
-        
+
         function showNoResults(searchTerm) {
             const resultDisplay = document.getElementById('result-display');
             resultDisplay.innerHTML = `
@@ -406,7 +474,7 @@
                 </div>
             `;
         }
-        
+
         function showError(message) {
             const resultDisplay = document.getElementById('result-display');
             resultDisplay.innerHTML = `
@@ -416,7 +484,7 @@
             `;
             resultDisplay.style.display = 'block';
         }
-        
+
         function escapeHtml(unsafe) {
             if (unsafe === null || unsafe === undefined) return '';
             return unsafe.toString()
@@ -426,7 +494,7 @@
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
-        
+
         function clearForm() {
             document.getElementById('search-input').value = '';
             document.getElementById('result-display').style.display = 'none';
@@ -434,4 +502,5 @@
         }
     </script>
 </body>
+
 </html>
